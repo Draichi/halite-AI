@@ -1,3 +1,7 @@
+## we gonna basically run this games locally a bunch of times, 
+# save whoever the winner was than train the model with this 
+# wnners data
+
 import hlt
 import logging
 ## we want a dict that for sure retains our order
@@ -6,7 +10,7 @@ import numpy as np
 import random
 import os
 
-VERSION = 1
+VERSION = 2
 
 # how many features per entite that we want to track
 HM_ENT_FEATURES = 5
@@ -247,3 +251,42 @@ while True:
                                     ignore_ships=False)
                         if navigate_command:
                             command_queue.append(navigate_command)
+                # FIND AND MINE AN EMPTY PLANET #
+                elif np.argmax(output_vector) == 2:
+                    # type: 2
+                    # Mine an empty planet. 
+                    if not isinstance(closest_empty_planets[0], int):
+                        target =  closest_empty_planets[0]
+                        if ship.can_dock(target):
+                            command_queue.append(ship.dock(target))
+                        else:
+                            navigate_command = ship.navigate(
+                                        ship.closest_point_to(target),
+                                        game_map,
+                                        speed=int(hlt.constants.MAX_SPEED),
+                                        ignore_ships=False)
+                            if navigate_command:
+                                command_queue.append(navigate_command)
+                    else:
+                        #attack!
+                        if not isinstance(closest_enemy_ships[0], int):
+                            navigate_command = ship.navigate(
+                                        ship.closest_point_to(closest_enemy_ships[0]),
+                                        game_map,
+                                        speed=int(hlt.constants.MAX_SPEED),
+                                        ignore_ships=False)
+                            if navigate_command:
+                                command_queue.append(navigate_command)
+            except Exception as e:
+                logging.info(str(e))
+            with open("c{}_input.vec".format(VERSION),"a") as f:
+                f.write(str( [round(item,3) for item in input_vector] ))
+                f.write('\n')
+            with open("c{}_out.vec".format(VERSION),"a") as f:
+                f.write(str(output_vector))
+                f.write('\n')
+        except Exception as e:
+            logging.info(str(e))
+    game.send_command_queue(command_queue)
+    # TURN END
+# GAME END
